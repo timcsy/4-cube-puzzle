@@ -1,0 +1,19 @@
+{
+  "name": "four-cube-puzzle-web",
+  "version": "1.0.0",
+  "description": "立體四方塊 4 Cube Puzzle — 互動 3D 解法視覺化（2011 科展研究的現代重製版）",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "@types/three": "^0.168.0",
+    "typescript": "^5.5.4",
+    "vite": "^5.4.2"
+  },
+  "dependencies": {
+    "three": "^0.168.0"
+  }
+}

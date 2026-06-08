@@ -1,0 +1,16 @@
+# 相依套件與建置產物
+web/node_modules/
+web/dist/
+
+# C++ 編譯產物
+color-study/color_study
+color-study/combinations
+color-study/legacy/original
+color-study/legacy/bf
+color-study/build/
+*.o
+*.obj
+
+# 系統垃圾
+.DS_Store
+Thumbs.db

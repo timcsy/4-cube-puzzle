@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>立體四方塊 · 4 Cube Puzzle</title>
+  </head>
+  <body>
+    <div id="app">
+      <aside id="sidebar">
+        <header>
+          <h1>立體四方塊</h1>
+          <p class="subtitle">4 Cube Puzzle · 互動解法視覺化</p>
+        </header>
+
+        <div class="mode-toggle">
+          <button id="mode-view" class="mode-btn active">觀看解答</button>
+          <button id="mode-play" class="mode-btn">試玩</button>
+          <button id="mode-study" class="mode-btn">排列研究</button>
+        </div>
+
+        <section class="panel">
+          <label class="field-label">立體圖形</label>
+          <div id="shape-list" class="shape-grid"></div>
+        </section>
+
+        <section class="panel" id="play-panel" hidden>
+          <div class="row between">
+            <span class="field-label">試玩：自己解解看</span>
+            <span id="play-status" class="badge"></span>
+          </div>
+          <p class="small dim" style="margin:0 0 10px">點選一個方塊使其發亮，再用下方按鈕旋轉它，讓所有相接面顏色一致。</p>
+          <div class="rot-controls">
+            <div class="rot-axis"><span>繞 X</span><button class="rbtn" data-ax="x" data-dir="-1">↺</button><button class="rbtn" data-ax="x" data-dir="1">↻</button></div>
+            <div class="rot-axis"><span>繞 Y</span><button class="rbtn" data-ax="y" data-dir="-1">↺</button><button class="rbtn" data-ax="y" data-dir="1">↻</button></div>
+            <div class="rot-axis"><span>繞 Z</span><button class="rbtn" data-ax="z" data-dir="-1">↺</button><button class="rbtn" data-ax="z" data-dir="1">↻</button></div>
+          </div>
+          <button id="play-swap" class="btn-wide" style="width:100%; margin-top:8px">🔄 交換方塊位置（點兩顆）</button>
+          <div id="play-win" class="win-banner" hidden>🎉 解出來了！</div>
+          <div class="row" style="margin-top:10px; gap:8px">
+            <button id="play-scramble" class="btn-wide">打亂重玩</button>
+            <button id="play-reveal" class="btn-wide">直接看解</button>
+          </div>
+        </section>
+
+        <section class="panel">
+          <label class="field-label">題目形狀（官方）</label>
+          <figure class="ref-gray"><img id="ref-problem" alt="題目形狀" /></figure>
+        </section>
+
+        <section class="panel view-only">
+          <div class="row between">
+            <span class="field-label">解答</span>
+            <span id="solution-count" class="badge"></span>
+          </div>
+          <div class="row">
+            <button id="prev-sol" class="btn">‹</button>
+            <input id="sol-slider" type="range" min="0" max="0" value="0" />
+            <button id="next-sol" class="btn">›</button>
+          </div>
+          <div id="solution-info" class="mono small"></div>
+        </section>
+
+        <section class="panel view-only">
+          <label class="field-label">解的數量：排列數 vs 組合數</label>
+          <div class="stat-row"><span>總嘗試空間</span><b id="stat-total">—</b></div>
+          <div class="stat-row"><span>排列數（合法排法）</span><b id="stat-raw">—</b></div>
+          <div class="stat-row"><span>組合數（對稱化簡）</span><b id="stat-reduced">—</b></div>
+          <div id="stat-note" class="mono small dim"></div>
+        </section>
+
+        <section class="panel">
+          <label class="field-label">顯示</label>
+          <label class="check"><input type="checkbox" id="toggle-spread" /> 方塊間距（拉開看內部）</label>
+          <label class="check"><input type="checkbox" id="toggle-spin" /> 自動旋轉</label>
+          <label class="check"><input type="checkbox" id="toggle-edges" checked /> 顯示邊框</label>
+          <label class="check"><input type="checkbox" id="toggle-labels" checked /> 顯示甲乙丙丁標籤</label>
+        </section>
+
+        <section class="panel legend">
+          <label class="field-label">顏色對應</label>
+          <div class="legend-row"><span class="swatch" style="background:#e23b3b"></span> 紅 R = 2</div>
+          <div class="legend-row"><span class="swatch" style="background:#f2c200"></span> 黃 Y = 1</div>
+          <div class="legend-row"><span class="swatch" style="background:#2f6bd8"></span> 藍 B = 0</div>
+          <div class="legend-row dim">甲乙丙丁＝四個方塊</div>
+        </section>
+
+        <footer class="credit">
+          原始研究：張頌宇 · 謝荏全 · 蕭亦淳（2011 國中科展）<br />
+          現代重製：TypeScript + Three.js
+        </footer>
+      </aside>
+
+      <main id="stage">
+        <div id="canvas-host"></div>
+        <div id="hud" class="mono small"></div>
+        <div id="study-view" hidden></div>
+      </main>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
