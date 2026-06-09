@@ -175,6 +175,20 @@ body {
 
 .study-list { margin: 0; padding-left: 18px; line-height: 1.9; font-size: 14px; }
 .study-list b { color: var(--text); }
+
+/* 收斂漏斗 */
+.funnel { display: flex; flex-direction: column; align-items: center; gap: 5px; margin: 16px 0 10px; }
+.funnel-step {
+  width: var(--w); max-width: 100%; box-sizing: border-box;
+  background: var(--panel2); border: 1px solid var(--line); border-radius: 10px;
+  padding: 10px 14px; text-align: center;
+}
+.funnel-step b { font-size: 22px; font-variant-numeric: tabular-nums; display: block; line-height: 1.2; }
+.funnel-step span { font-size: 12px; color: var(--dim); }
+.funnel-step.funnel-final { background: linear-gradient(135deg, #2d4a7a, #3a6bb0); border-color: var(--accent); }
+.funnel-step.funnel-final b { color: #fff; }
+.funnel-step.funnel-final span { color: #dce8ff; }
+.funnel-arrow { font-size: 12px; color: var(--dim); text-align: center; }
 .study-credit { color: var(--dim); font-size: 12px; line-height: 1.7; margin-top: 20px; }
 .study-credit code { background: var(--panel2); padding: 1px 5px; border-radius: 4px; }
 .study-loading { padding: 60px 34px; color: var(--dim); font-size: 15px; text-align: center; }

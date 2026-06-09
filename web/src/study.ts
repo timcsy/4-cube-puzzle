@@ -180,6 +180,21 @@ export function renderStudy(host: HTMLElement, hooks?: CubeSetHooks) {
         </ul>
       </section>
 
+      <section class="study-card">
+        <div class="study-card-h">延伸：真正「能全玩」13 個圖形的套組有多少？</div>
+        <p>「24 面全不同」只保證方塊合法，不保證它拼得出那 13 個圖形。對全部設計枚舉、層層化簡後：</p>
+        <div class="funnel">
+          <div class="funnel-step" style="--w:100%"><b>515,780</b><span>「24 面全不同」的設計（排列研究的組合數）</span></div>
+          <div class="funnel-arrow">↓ 要 13 個圖形全部拼得出來（瓶頸：圖形五，98% 隨機套組解不開）</div>
+          <div class="funnel-step" style="--w:74%"><b>2,904</b><span>可全玩（13 圖形全解，僅 0.563%）</span></div>
+          <div class="funnel-arrow">↓ 除去 R/Y/B 顏色置換（軌道全為大小 6）</div>
+          <div class="funnel-step" style="--w:52%"><b>484</b><span>本質設計</span></div>
+          <div class="funnel-arrow">↓ 再除去鏡射手性（軌道全為大小 12，皆手性對）</div>
+          <div class="funnel-step funnel-final" style="--w:34%"><b>242</b><span>真正不同的「可全玩」拼圖</span></div>
+        </div>
+        <p class="study-note">原始 2011 那組（#301,546）是這 242 個之一，且為手性（鏡像 #335034）——稀有，但不孤獨。</p>
+      </section>
+
       <p class="study-credit">
         排列數由 <code>color-study/color_study.cpp</code> 計算、組合數由 <code>color-study/combinations.cpp</code>
         以 Burnside 軌道計數得出（排列 ÷ 組合 = 恰好 24⁴ = 331,776，代表軌道全滿）。
