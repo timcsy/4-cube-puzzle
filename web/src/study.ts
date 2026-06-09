@@ -398,7 +398,14 @@ function mountCubeSet(card: HTMLElement, hooks: CubeSetHooks) {
         <button class="btn-wide cs-mini" id="cs-rand">🎲 隨機</button>
         <button class="btn-wide cs-mini" id="cs-orig">↩ 原始套組</button>
       </div>
-      <p class="study-note" style="margin-top:6px !important">當年 2011 那組真實拼圖就是其中一個編號（按「原始套組」跳過去對照）。</p>
+      <div class="cs-row cs-presets">
+        <span>推薦套組</span>
+        <button class="btn-wide cs-mini" id="cs-p-orig" title="2011 原物：13 官方完美、全域顏色平衡，但無唯一解關、解不開對角雙柱">① 傳承</button>
+        <button class="btn-wide cs-mini" id="cs-p-allround" title="#10594：有唯一解優雅關＋難度跨度廣＋88 全解，綜合最佳">② 全才</button>
+        <button class="btn-wide cs-mini" id="cs-p-hard" title="#150693：每關都緊、解法最少，挑戰性最高，88 全解">③ 最難</button>
+        <button class="btn-wide cs-mini" id="cs-p-even" title="#4223：每顆方塊都接近 8/8/8、最繽紛（也因此最好解），88 全解">④ 最均</button>
+      </div>
+      <p class="study-note" style="margin-top:6px !important">當年 2011 那組真實拼圖就是其中一個編號（按「原始套組」跳過去對照）。「推薦套組」是 154 個「能解開全部 88 種形狀」的設計裡，依不同性格各挑一個（詳見 docs／顏色排列研究）。</p>
     </div>
     <div class="cs-pane" data-pane="custom" hidden>
       <div class="cs-row">
@@ -480,6 +487,14 @@ function mountCubeSet(card: HTMLElement, hooks: CubeSetHooks) {
   q('#cs-next').onclick = () => setIndex(curIndex + 1);
   q('#cs-rand').onclick = () => setIndex(gen.randomIndex());
   q('#cs-orig').onclick = () => { if (origIdx < 0) origIdx = gen.originalIndex(); setIndex(origIdx); };
+
+  // 推薦套組捷徑：154 個「88 全解」設計裡依性格各挑一個。
+  // 推薦編號為 1-based 套組編號，setIndex 吃 0-based，故傳 編號−1。
+  const gotoPreset = (oneBased: number, desc: string) => { setIndex(oneBased - 1); status.textContent = desc; };
+  q('#cs-p-orig').onclick = () => { if (origIdx < 0) origIdx = gen.originalIndex(); setIndex(origIdx); status.textContent = `① 傳承：2011 原始套組（編號 ${origIdx + 1}）`; };
+  q('#cs-p-allround').onclick = () => gotoPreset(10594, '② 全才 #10594：唯一解關＋難度跨度廣＋88 全解');
+  q('#cs-p-hard').onclick = () => gotoPreset(150693, '③ 最難 #150693：每關最緊、挑戰性最高');
+  q('#cs-p-even').onclick = () => gotoPreset(4223, '④ 最均 #4223：每顆顏色最均勻、最繽紛');
 
   // 分步自訂：面分配
   partInput.onchange = () => setPart((parseInt(partInput.value, 10) || 1) - 1);

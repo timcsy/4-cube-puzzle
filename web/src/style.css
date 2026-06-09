@@ -207,6 +207,8 @@ body {
   background: var(--bg); color: var(--text); font-size: 13px; font-variant-numeric: tabular-nums;
 }
 .cs-mini { width: auto !important; flex: 0 0 auto; padding: 6px 10px; font-size: 13px; }
+.cs-presets { margin-top: -2px; padding: 6px 8px; background: var(--bg); border: 1px dashed var(--line); border-radius: 8px; }
+.cs-presets > span:first-child { font-weight: 600; }
 .cs-arrange { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 6px; }
 .cs-stepper { display: flex; align-items: center; gap: 6px; font-size: 13px; }
 .cs-stepper > span:first-child { flex: 0 0 56px; color: var(--dim); }
