@@ -11,6 +11,9 @@ color-study/build/
 *.o
 *.obj
 
+# 分析腳本產生的中間檔
+web/scripts/fully-indices.json
+
 # 系統垃圾
 .DS_Store
 Thumbs.db
