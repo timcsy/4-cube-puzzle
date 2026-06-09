@@ -24,9 +24,11 @@ export interface Shape {
   level: string;
   note?: string;
   constraints: Constraint[];
-  adjacency: Adjacency[];
-  rawCount: number;            // 程式窮舉的原始排列數
+  adjacency?: Adjacency[];
+  rawCount?: number;            // 程式窮舉的原始排列數
   reducedCount: number | null; // 報告中對稱化簡後的解法數（部分已知）
+  cells?: [number, number, number][]; // 4 顆方塊的格座標（動態 88 形狀用；供組裝對齊朝向）
+  official?: string | null;     // 對應的官方圖形 id（'1'..'13'）；非官方為 null
 }
 
 export interface PuzzleData {

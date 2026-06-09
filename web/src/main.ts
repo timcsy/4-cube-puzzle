@@ -9,10 +9,12 @@ import { assemble } from './assembly';
 import { rotateOrient, type Axis } from './rotations';
 import { renderStudy } from './study';
 import { CubeSetGenerator } from './cubeset';
+import { type Cell, enumerate88, isFaceConnected, canonKey, TWIN_PILLAR_KEY, officialId, shapeConstraints, drawShapeIso } from './shapes';
 
 const KEYS: CubeKey[] = ['a', 'b', 'c', 'd'];
 
 const $ = <T extends HTMLElement>(sel: string) => document.querySelector(sel) as T;
+const $$ = (sel: string) => Array.from(document.querySelectorAll(sel)) as HTMLElement[];
 
 async function boot() {
   const data: PuzzleData = await fetch('./data/puzzle-data.json').then((r) => r.json());
@@ -25,30 +27,78 @@ async function boot() {
   let rawCount = 0;
   let solIdx = 0;
 
-  // 建立圖形清單
-  const shapeList = $('#shape-list');
-  for (const id of data.shapeOrder) {
-    const s = data.shapes[id];
-    const btn = document.createElement('button');
-    btn.className = 'shape-btn';
-    btn.dataset.id = id;
-    btn.innerHTML = `<span class="st">${s.title}</span><span class="sl">${s.level}</span>`;
-    btn.onclick = () => selectShape(id);
-    shapeList.appendChild(btn);
+  // ── 建立全部 88 種形狀（官方 13 沿用既有資料，其餘 75 即時生成約束）──
+  interface ShapeEntry { id: string; cells: Cell[]; official: string | null; twin: boolean; num: number }
+  const faceCells = enumerate88().filter(isFaceConnected);
+  const allCells = enumerate88();
+  const edgeCells = allCells.filter((c) => !isFaceConnected(c));
+  function registerGroup(list: Cell[][], tabName: string, prefix: string): ShapeEntry[] {
+    return list.map((cells, i) => {
+      const off = officialId(cells);
+      const num = i + 1;
+      const id = off ?? `${prefix}${num}`;
+      const twin = canonKey(cells) === TWIN_PILLAR_KEY;
+      if (off) {
+        data.shapes[off].official = off;
+        data.shapes[off].cells = cells;
+      } else {
+        data.shapes[id] = {
+          id, title: `${tabName} #${num}`, level: '', constraints: shapeConstraints(cells),
+          reducedCount: null, cells, official: null,
+        };
+      }
+      return { id, cells, official: off, twin, num };
+    });
   }
+  const faceEntries = registerGroup(faceCells, '面相連', 'f');
+  const edgeEntries = registerGroup(edgeCells, '含邊接觸', 'e');
+
+  // ── 形狀選擇器：面相連(8) / 含邊接觸(80) 兩 tab，3D 縮圖網格，官方標★ ──
+  const shapeList = $('#shape-list');
+  function renderPicker(tab: 'face' | 'edge') {
+    const entries = tab === 'face' ? faceEntries : edgeEntries;
+    shapeList.innerHTML = '';
+    const toDraw: Array<[HTMLCanvasElement, Cell[]]> = [];
+    for (const e of entries) {
+      const cell = document.createElement('button');
+      cell.className = 'shape-pick';
+      cell.dataset.id = e.id;
+      if (e.twin) cell.classList.add('twin');
+      if (e.id === curShape) cell.classList.add('active');
+      const cv = document.createElement('canvas'); cv.className = 'shape-pick-cv';
+      cell.appendChild(cv);
+      if (e.official) {
+        const star = document.createElement('span'); star.className = 'shape-star';
+        star.textContent = '★'; star.title = `官方 ${data.shapes[e.official].title}`;
+        cell.appendChild(star);
+      }
+      cell.onclick = () => selectShape(e.id);
+      shapeList.appendChild(cell);
+      toDraw.push([cv, e.cells]);
+    }
+    // 等版面完成後再畫（縮圖需正確的 clientWidth/Height）
+    requestAnimationFrame(() => { for (const [cv, cells] of toDraw) drawShapeIso(cv, cells); });
+  }
+  $$('#shape-tabs .shapes-tab').forEach((b) => {
+    b.onclick = () => {
+      $$('#shape-tabs .shapes-tab').forEach((x) => x.classList.toggle('active', x === b));
+      renderPicker((b as HTMLElement).dataset.t as 'face' | 'edge');
+    };
+  });
+  renderPicker('face');
 
   const slider = $<HTMLInputElement>('#sol-slider');
   const solCount = $('#solution-count');
   const solInfo = $('#solution-info');
   const hud = $('#hud');
-  const refProblem = $<HTMLImageElement>('#ref-problem');
-  const setReferenceImage = (id: string) => { refProblem.src = `./shapes/prob-${id}.gif`; };
+  const refIso = $<HTMLCanvasElement>('#ref-problem-iso');
+  const renderRefIso = (id: string) => { const c = data.shapes[id].cells; if (c) drawShapeIso(refIso, c as Cell[]); };
 
   function selectShape(id: string) {
     curShape = id;
-    document.querySelectorAll('.shape-btn').forEach((b) =>
+    document.querySelectorAll('.shape-pick').forEach((b) =>
       b.classList.toggle('active', (b as HTMLElement).dataset.id === id));
-    setReferenceImage(id);
+    renderRefIso(id);
     currentR = assemble(data.shapes[id]).a.quaternion.clone();
 
     const t0 = performance.now();
@@ -60,8 +110,13 @@ async function boot() {
 
     const s = data.shapes[id];
     solCount.textContent = `${rawCount} 組`;
-    hud.innerHTML = `<b>${s.title}</b>（${s.level}）${s.note ? '· ' + s.note : ''}<br>` +
-      `排列數 <b>${rawCount.toLocaleString()}</b> · 解出耗時 ${ms} ms`;
+    const lvl = s.level ? `（${s.level}）` : '';
+    const offTag = s.official ? ' · <span class="dim">官方圖形</span>' : '';
+    const line2 = rawCount > 0
+      ? `排列數 <b>${rawCount.toLocaleString()}</b> · 解出耗時 ${ms} ms`
+      : `<span style="color:#e89a9a">此套組下無解（0 組）</span> · 耗時 ${ms} ms`;
+    hud.innerHTML = `<b>${s.title}</b>${lvl}${s.note ? ' · ' + s.note : ''}${offTag}<br>${line2}`;
+    if (rawCount === 0) viz.clearStage();
 
     // 排列數 vs 組合數
     const nf = (n: number) => n.toLocaleString();
@@ -241,13 +296,17 @@ async function boot() {
     renderPlay();
   };
 
+  let lastPuzzleSub: 'view' | 'play' = 'view';
   function setMode(m: 'view' | 'play' | 'study') {
     mode = m;
-    $('#mode-view').classList.toggle('active', m === 'view');
-    $('#mode-play').classList.toggle('active', m === 'play');
-    $('#mode-study').classList.toggle('active', m === 'study');
-
+    if (m !== 'study') lastPuzzleSub = m;
     const isStudy = m === 'study';
+    $('#mode-puzzle').classList.toggle('active', !isStudy);
+    $('#mode-color').classList.toggle('active', isStudy);
+    ($('#puzzle-sub') as HTMLElement).hidden = isStudy; // 子切換只在「圖形拼圖」顯示
+    $('#sub-view').classList.toggle('active', m === 'view');
+    $('#sub-play').classList.toggle('active', m === 'play');
+
     // 側欄：研究模式時隱藏所有解題/試玩面板
     document.querySelectorAll<HTMLElement>('#sidebar section').forEach((el) => { el.hidden = isStudy; });
     // 舞台：研究模式時改顯示文字頁，隱藏 3D 畫布
@@ -276,9 +335,10 @@ async function boot() {
     viz.spread = spreadBox.checked ? 1.5 : 1;
     renderForMode(true);
   }
-  $('#mode-view').onclick = () => setMode('view');
-  $('#mode-play').onclick = () => setMode('play');
-  $('#mode-study').onclick = () => setMode('study');
+  $('#mode-puzzle').onclick = () => setMode(lastPuzzleSub);
+  $('#mode-color').onclick = () => setMode('study');
+  $('#sub-view').onclick = () => setMode('view');
+  $('#sub-play').onclick = () => setMode('play');
 
   selectShape(curShape);
 }

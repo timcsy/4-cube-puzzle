@@ -91,6 +91,8 @@ export class PuzzleViz {
     this.camera.updateProjectionMatrix();
   }
 
+  /** 清空舞台（無解的形狀用）。 */
+  clearStage() { this.clear(); }
   private clear() {
     for (const k of KEYS) { const g = this.cubeGroups[k]; if (g) this.root.remove(g); }
     this.cubeGroups = {};

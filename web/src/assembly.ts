@@ -103,9 +103,10 @@ export function assemble(shape: Shape, aligned = true): Record<CubeKey, Placemen
   const centered: Record<CubeKey, THREE.Vector3> = {} as never;
   for (const key of KEYS) centered[key] = pos[key]!.clone().sub(centroid);
 
-  // 找全域旋轉 R，使外型朝向對齊官方參考（不破壞接縫，純剛體轉向）
+  // 找全域旋轉 R，使外型朝向對齊參考（不破壞接縫，純剛體轉向）
+  // 官方 13 用 REF_ORIENT；動態 88 形狀用自身 cells 當參考。
   let R = new THREE.Matrix4();
-  const ref = aligned ? REF_ORIENT[shape.id] : null;
+  const ref = aligned ? (REF_ORIENT[shape.id] ?? shape.cells ?? null) : null;
   if (ref) {
     const refC = ref.map((p) => new THREE.Vector3(...p));
     const rc = new THREE.Vector3();

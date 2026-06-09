@@ -9,6 +9,7 @@ import { COLOR_HEX } from './types';
 import type { CubeKey } from './types';
 import type { CubeSetGenerator, Design } from './cubeset';
 import { buildCubeMesh } from './geometry';
+import { type Cell, enumerate88, isFaceConnected, canonKey, TWIN_PILLAR_KEY, drawShapeIso } from './shapes';
 
 // 結果數字（由 color-study 的 C++ 程式計算、驗證）
 const N = {
@@ -441,113 +442,6 @@ class Preview3D {
   stop() { if (this.raf) { cancelAnimationFrame(this.raf); this.raf = 0; } }
 }
 
-// ===== 全部 88 種四方塊形狀（面+邊接觸、鏡像分開）的列舉與等角投影縮圖 =====
-type Cell = [number, number, number];
-
-/** 列舉 4 顆方塊能組成的所有形狀（相鄰 = 面或邊接觸 dist²∈{1,2}，旋轉視為同、鏡像視為不同）。 */
-function enumerate88(): Cell[][] {
-  const units: Cell[] = [[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1]];
-  const dot = (a: Cell, b: Cell) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
-  const cross = (a: Cell, b: Cell): Cell => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
-  const ROT: Cell[][] = [];
-  for (const a of units) for (const b of units) {
-    if (dot(a, b) !== 0) continue;
-    const c = cross(a, b);
-    const det = a[0] * (b[1] * c[2] - b[2] * c[1]) - a[1] * (b[0] * c[2] - b[2] * c[0]) + a[2] * (b[0] * c[1] - b[1] * c[0]);
-    if (det === 1) ROT.push([a, b, c]);
-  }
-  const ap = (M: Cell[], p: Cell): Cell => [dot(M[0], p), dot(M[1], p), dot(M[2], p)];
-  const kp = (p: Cell) => p.join(',');
-  const cmp = (a: Cell, b: Cell) => a[0] - b[0] || a[1] - b[1] || a[2] - b[2];
-  const canon = (cells: Cell[]): { key: string; pts: Cell[] } => {
-    let key: string | null = null, pts: Cell[] = cells;
-    for (const M of ROT) {
-      let p = cells.map((c) => ap(M, c));
-      const mx = Math.min(...p.map((q) => q[0])), my = Math.min(...p.map((q) => q[1])), mz = Math.min(...p.map((q) => q[2]));
-      p = p.map((q): Cell => [q[0] - mx, q[1] - my, q[2] - mz]).sort(cmp);
-      const s = p.map(kp).join(';');
-      if (key === null || s < key) { key = s; pts = p; }
-    }
-    return { key: key!, pts };
-  };
-  const NB: Cell[] = [];
-  for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) for (let dz = -1; dz <= 1; dz++) {
-    const d = dx * dx + dy * dy + dz * dz; if (d === 1 || d === 2) NB.push([dx, dy, dz]);
-  }
-  let level = new Map<string, Cell[]>();
-  const c0 = canon([[0, 0, 0]]); level.set(c0.key, c0.pts);
-  for (let sz = 1; sz < 4; sz++) {
-    const nx = new Map<string, Cell[]>();
-    for (const cells of level.values()) {
-      const occ = new Set(cells.map(kp)); const cand = new Set<string>();
-      for (const c of cells) for (const d of NB) { const n: Cell = [c[0] + d[0], c[1] + d[1], c[2] + d[2]]; if (!occ.has(kp(n))) cand.add(kp(n)); }
-      for (const ck of cand) { const n = ck.split(',').map(Number) as Cell; const cn = canon([...cells, n]); if (!nx.has(cn.key)) nx.set(cn.key, cn.pts); }
-    }
-    level = nx;
-  }
-  return [...level.values()];
-}
-
-/** 是否「純面相連」（只用面接觸 dist²=1 就連通）。 */
-function isFaceConnected(cells: Cell[]): boolean {
-  const kp = (p: Cell) => p.join(',');
-  const d2 = (a: Cell, b: Cell) => (a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2 + (a[2] - b[2]) ** 2;
-  const seen = new Set([kp(cells[0])]); const st = [cells[0]];
-  while (st.length) { const p = st.pop()!; for (const c of cells) if (!seen.has(kp(c)) && d2(p, c) === 1) { seen.add(kp(c)); st.push(c); } }
-  return seen.size === 4;
-}
-
-const TWIN_PILLAR_KEY = (() => {
-  // 對角雙柱（原始套組唯一解不開的形狀）的標準鍵
-  const cells: Cell[] = [[0, 0, 0], [0, 0, 1], [1, 1, 0], [1, 1, 1]];
-  return enumerate88Canon(cells);
-})();
-function enumerate88Canon(cells: Cell[]): string {
-  const units: Cell[] = [[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1]];
-  const dot = (a: Cell, b: Cell) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
-  const cross = (a: Cell, b: Cell): Cell => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
-  const ROT: Cell[][] = [];
-  for (const a of units) for (const b of units) { if (dot(a, b) !== 0) continue; const c = cross(a, b); const det = a[0] * (b[1] * c[2] - b[2] * c[1]) - a[1] * (b[0] * c[2] - b[2] * c[0]) + a[2] * (b[0] * c[1] - b[1] * c[0]); if (det === 1) ROT.push([a, b, c]); }
-  const ap = (M: Cell[], p: Cell): Cell => [dot(M[0], p), dot(M[1], p), dot(M[2], p)];
-  const kp = (p: Cell) => p.join(',');
-  const cmp = (a: Cell, b: Cell) => a[0] - b[0] || a[1] - b[1] || a[2] - b[2];
-  let key: string | null = null;
-  for (const M of ROT) { let p = cells.map((c) => ap(M, c)); const mx = Math.min(...p.map((q) => q[0])), my = Math.min(...p.map((q) => q[1])), mz = Math.min(...p.map((q) => q[2])); p = p.map((q): Cell => [q[0] - mx, q[1] - my, q[2] - mz]).sort(cmp); const s = p.map(kp).join(';'); if (key === null || s < key) key = s; }
-  return key!;
-}
-
-/** 等角投影把一個 4-cell 形狀畫到 canvas（上亮、右中、左暗三面）。 */
-function drawShapeIso(canvas: HTMLCanvasElement, cells: Cell[]) {
-  const dpr = Math.min(window.devicePixelRatio || 1, 2);
-  const W = canvas.clientWidth || 104, H = canvas.clientHeight || 104;
-  canvas.width = W * dpr; canvas.height = H * dpr;
-  const ctx = canvas.getContext('2d')!; ctx.scale(dpr, dpr); ctx.clearRect(0, 0, W, H);
-  // 稍不對稱的 dimetric 投影：X、Z 兩軸角度略不同，使 (1,1,1) 體對角不被壓扁
-  // → 任何方向都不會有方塊完全被另一顆遮住（標準 iso 會，導致「看起來少一顆」）。
-  const proj = (x: number, y: number, z: number) => ({ ex: 1.0 * x - 0.78 * z, ey: 0.5 * x + 0.58 * z - y });
-  // 量測投影 bbox（用全部頂點）以自動置中縮放
-  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-  for (const [x, y, z] of cells) for (const dx of [0, 1]) for (const dy of [0, 1]) for (const dz of [0, 1]) {
-    const p = proj(x + dx, y + dy, z + dz); minX = Math.min(minX, p.ex); maxX = Math.max(maxX, p.ex); minY = Math.min(minY, p.ey); maxY = Math.max(maxY, p.ey);
-  }
-  const pad = 10, s = Math.min((W - 2 * pad) / (maxX - minX), (H - 2 * pad) / (maxY - minY));
-  const ox = (W - (maxX - minX) * s) / 2 - minX * s, oy = (H - (maxY - minY) * s) / 2 - minY * s;
-  const T = (x: number, y: number, z: number) => { const p = proj(x, y, z); return [ox + p.ex * s, oy + p.ey * s] as const; };
-  ctx.lineJoin = 'round';
-  const face = (pts: Array<readonly [number, number]>, fill: string) => {
-    ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]); for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]); ctx.closePath();
-    ctx.fillStyle = fill; ctx.fill(); ctx.strokeStyle = 'rgba(12,18,30,0.75)'; ctx.lineWidth = 1; ctx.stroke();
-  };
-  // 由遠到近（x+y+z 升序）畫，避免遮擋錯誤
-  const order = cells.map((c, i) => ({ c, i })).sort((a, b) => (a.c[0] + a.c[1] + a.c[2]) - (b.c[0] + b.c[1] + b.c[2]));
-  for (const { c } of order) {
-    const [x, y, z] = c;
-    face([T(x, y + 1, z), T(x + 1, y + 1, z), T(x + 1, y + 1, z + 1), T(x, y + 1, z + 1)], '#86a8df'); // 上(亮)
-    face([T(x + 1, y, z), T(x + 1, y, z + 1), T(x + 1, y + 1, z + 1), T(x + 1, y + 1, z)], '#41608f'); // 右(+x，暗)
-    face([T(x, y, z + 1), T(x + 1, y, z + 1), T(x + 1, y + 1, z + 1), T(x, y + 1, z + 1)], '#5d7fb4'); // 左(+z，中)
-  }
-}
-
 /** 單一可旋轉 3D 檢視器（共用一個 WebGL context）：滑鼠拖曳轉動，看清形狀的方塊數。 */
 class ShapeViewer3D {
   renderer: THREE.WebGLRenderer;
@@ -639,7 +533,7 @@ function mountShapes(card: HTMLElement) {
     grid.innerHTML = '';
     list.forEach((cells, i) => {
       const cell = document.createElement('div'); cell.className = 'shape-cell';
-      const isTwin = enumerate88Canon(cells) === TWIN_PILLAR_KEY;
+      const isTwin = canonKey(cells) === TWIN_PILLAR_KEY;
       if (isTwin) cell.classList.add('twin');
       const cv = document.createElement('canvas'); cv.className = 'shape-canvas';
       const tag = document.createElement('span'); tag.className = 'shape-no'; tag.textContent = String(i + 1);

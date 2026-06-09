@@ -14,14 +14,21 @@
         </header>
 
         <div class="mode-toggle">
-          <button id="mode-view" class="mode-btn active">觀看解答</button>
-          <button id="mode-play" class="mode-btn">試玩</button>
-          <button id="mode-study" class="mode-btn">排列研究</button>
+          <button id="mode-puzzle" class="mode-btn active">圖形拼圖</button>
+          <button id="mode-color" class="mode-btn">顏色排列</button>
+        </div>
+        <div class="sub-toggle" id="puzzle-sub">
+          <button id="sub-view" class="sub-btn active">看解答</button>
+          <button id="sub-play" class="sub-btn">試玩</button>
         </div>
 
-        <section class="panel">
-          <label class="field-label">立體圖形</label>
-          <div id="shape-list" class="shape-grid"></div>
+        <section class="panel" id="shape-panel">
+          <label class="field-label">圖形 <span class="dim small">（全 88 種，★ 官方 13）</span></label>
+          <div class="shapes-tabs" id="shape-tabs">
+            <button class="shapes-tab active" data-t="face">面相連 8</button>
+            <button class="shapes-tab" data-t="edge">含邊接觸 80</button>
+          </div>
+          <div id="shape-list" class="shape-pick-grid"></div>
         </section>
 
         <section class="panel" id="play-panel" hidden>
@@ -44,8 +51,8 @@
         </section>
 
         <section class="panel">
-          <label class="field-label">題目形狀（官方）</label>
-          <figure class="ref-gray"><img id="ref-problem" alt="題目形狀" /></figure>
+          <label class="field-label">題目形狀</label>
+          <figure class="ref-gray"><canvas id="ref-problem-iso"></canvas></figure>
         </section>
 
         <section class="panel view-only">
