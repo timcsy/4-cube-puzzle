@@ -73,3 +73,8 @@ for(const N of full){if(seen2.has(N))continue;const stack=[N],orb=new Set([N]);
   for(const x of orb)seen2.add(x);orb2++;sz2[orb.size]=(sz2[orb.size]||0)+1;}
 console.log(`⟨色置換, 鏡射⟩ 合併軌道數：${orb2}`);
 console.log(`軌道大小分布：`,sz2,'（12=手性對，6=自身鏡射對稱）');
+
+// —— 真實調色盤：全部 2904 組用到的不同方塊（甲乙丙對稱）——
+const Sj=new Set(),Sy=new Set(),Sb=new Set(),Sd=new Set();
+for(const N of full){const q=unrank(N);Sj.add(q[0].join(''));Sy.add(q[1].join(''));Sb.add(q[2].join(''));Sd.add(q[3].join(''));}
+console.log(`\n調色盤（2904 組用到的不同方塊）：甲 ${Sj.size}、乙 ${Sy.size}、丙 ${Sb.size}（/632）、丁 ${Sd.size}（/8345）`);
