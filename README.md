@@ -6,6 +6,8 @@
 把一份用 Dev-C++、Visual Basic、PhotoImpact、Freehand 完成的國中科展，
 重寫成今天的樣子：**TypeScript 解法引擎 + Three.js 互動 3D 視覺化 + 現代 C++ + Markdown 文件**。
 
+🎮 **線上試玩 → https://timcsy.github.io/4-cube-puzzle/**
+
 ![四方塊展開圖](docs/images/unfold-jia.jpg)
 
 ## 這是什麼遊戲？
@@ -48,8 +50,9 @@
 
 ## 快速開始
 
-> **線上試玩**：push 到 GitHub 後，於 repo *Settings → Pages → Source* 選「GitHub Actions」即會自動部署，
-> 網址為 `https://<你的帳號>.github.io/4-cube-puzzle/`（見 [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml)）。
+> **線上試玩**：<https://timcsy.github.io/4-cube-puzzle/>
+> （push 到 GitHub 後，於 repo *Settings → Pages → Source* 選「GitHub Actions」即會由
+> [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) 自動部署。）
 
 ### 互動 3D 網頁
 
