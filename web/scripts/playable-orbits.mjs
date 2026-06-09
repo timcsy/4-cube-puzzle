@@ -56,3 +56,20 @@ console.log(`每個軌道都仍在「全可玩」集合內（色置換保持全�
 // 原始套組的軌道
 const oOrb=new Set();for(const s of perm3)oOrb.add(indexAfter(s,unrank(301545)));
 console.log(`原始 #301546 的 6 個顏色變體編號(1-based)：${[...oOrb].map(x=>x+1).sort((a,b)=>a-b).join(', ')}`);
+
+// —— 再加一層：鏡射（手性）對稱 ——
+const Mmat=[[-1,0,0],[0,1,0],[0,0,1]];
+const Mperm=new Array(24);for(let s=0;s<24;s++){const f=(s/4)|0,w=s%4;Mperm[s]=so(ap(Mmat,FN[f]).map(Math.round),ap(Mmat,wedge(f,w)));}
+const applyM=t=>{const o=new Array(24);for(let s=0;s<24;s++)o[Mperm[s]]=t[s];return o;};
+function mirrorIndex(quad){const m=quad.map(applyM);let eA,eB,eC,eD;
+  for(const t of m){const mo=monoOf(t);if(mo===2)eA=IA.get(canonKey(t));else if(mo===1)eB=IB.get(canonKey(t));else if(mo===0)eC=IC.get(canonKey(t));else eD=ID.get(canonKey(t));}
+  if(!eA||!eB||!eC||!eD)return -1;const p=partMap.get(eA.mask+','+eB.mask+','+eC.mask);if(!p)return -1;
+  return p.off+eA.idx+p.a*eB.idx+p.a*p.b*eC.idx+p.a*p.b*p.c*eD.idx;}
+let inSet=0;for(const N of full){const M=mirrorIndex(unrank(N));if(M>=0&&fullSet.has(M))inSet++;}
+console.log(`\n鏡射保持全可玩（13 圖形集合鏡射封閉）？ ${inSet}/${full.length}`);
+const seen2=new Set();let orb2=0;const sz2={};
+for(const N of full){if(seen2.has(N))continue;const stack=[N],orb=new Set([N]);
+  while(stack.length){const x=stack.pop(),q=unrank(x);for(const y of [mirrorIndex(q),...perm3.map(s=>indexAfter(s,q))])if(y>=0&&!orb.has(y)){orb.add(y);stack.push(y);}}
+  for(const x of orb)seen2.add(x);orb2++;sz2[orb.size]=(sz2[orb.size]||0)+1;}
+console.log(`⟨色置換, 鏡射⟩ 合併軌道數：${orb2}`);
+console.log(`軌道大小分布：`,sz2,'（12=手性對，6=自身鏡射對稱）');
